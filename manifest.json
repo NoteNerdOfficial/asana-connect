@@ -1,7 +1,7 @@
 {
   "id": "asana-connect",
   "name": "Asana Connect",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minAppVersion": "1.7.2",
   "description": "Embed, create, and sync tasks from Asana. Supports any workspace or project.",
   "author": "notenerd",
