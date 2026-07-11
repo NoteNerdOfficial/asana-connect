@@ -1,0 +1,308 @@
+/* — Asana Plugin Styles */
+
+/* Task embed */
+.asana-task-embed {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin: 8px 0;
+  background: var(--background-secondary);
+}
+
+.asana-task-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.asana-task-checkbox {
+  margin-top: 3px;
+  flex-shrink: 0;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.asana-task-title {
+  font-size: 1em;
+  font-weight: 600;
+  color: var(--text-normal);
+  text-decoration: none;
+  flex: 1;
+}
+
+.asana-task-title:hover {
+  text-decoration: underline;
+  color: var(--text-accent);
+}
+
+.asana-completed {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.asana-task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 0 24px;
+}
+
+.asana-meta-chip {
+  font-size: 0.75em;
+  background: var(--background-primary-alt);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.asana-overdue {
+  background: rgba(255, 80, 80, 0.12);
+  border-color: rgba(255, 80, 80, 0.4);
+  color: var(--color-red);
+}
+
+.asana-task-notes {
+  margin: 10px 0 0 24px;
+  font-size: 0.85em;
+  color: var(--text-muted);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.asana-custom-fields {
+  margin: 8px 0 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.asana-cf-row {
+  font-size: 0.78em;
+  display: flex;
+  gap: 6px;
+  color: var(--text-muted);
+}
+
+.asana-cf-name {
+  font-weight: 500;
+}
+
+/* Task list block */
+.asana-task-list {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: var(--background-secondary);
+  margin: 8px 0;
+}
+
+.asana-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.asana-list-title {
+  margin: 0;
+  font-size: 0.9em;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.asana-refresh-btn,
+.asana-icon-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1em;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.asana-refresh-btn:hover,
+.asana-icon-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+.asana-task-list-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.asana-task-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.asana-task-list-item:last-child {
+  border-bottom: none;
+}
+
+.asana-task-list-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.asana-task-list-name {
+  display: block;
+  font-size: 0.9em;
+  color: var(--text-normal);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.asana-task-list-name:hover {
+  text-decoration: underline;
+  color: var(--text-accent);
+}
+
+.asana-task-list-sub {
+  display: flex;
+  gap: 4px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+
+/* Sidebar view */
+.asana-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  position: sticky;
+  top: 0;
+  background: var(--background-primary);
+  z-index: 1;
+}
+
+.asana-sidebar-title {
+  margin: 0;
+  font-size: 0.85em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.asana-sidebar-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.asana-section {
+  padding: 0 8px 8px;
+}
+
+.asana-section-title {
+  font-size: 0.75em;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 10px 0 4px;
+}
+
+.asana-overdue-title {
+  color: var(--color-red);
+}
+
+.asana-sidebar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.asana-sidebar-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 4px 4px;
+  border-radius: 4px;
+}
+
+.asana-sidebar-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.asana-sidebar-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.asana-sidebar-task-name {
+  display: block;
+  font-size: 0.85em;
+  color: var(--text-normal);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.asana-sidebar-task-name:hover {
+  text-decoration: underline;
+  color: var(--text-accent);
+}
+
+.asana-sidebar-project {
+  display: block;
+  font-size: 0.72em;
+  color: var(--text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Shared utilities */
+.asana-loading {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  font-style: italic;
+  padding: 8px 0;
+}
+
+.asana-error {
+  color: var(--color-red);
+  font-size: 0.85em;
+  padding: 8px 0;
+}
+
+.asana-empty {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  font-style: italic;
+  padding: 8px 0;
+  text-align: center;
+}
+
+.asana-item-done .asana-sidebar-task-name {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* Modal tweaks */
+.asana-modal-required .setting-item-name::after {
+  content: " *";
+  color: var(--color-red);
+}
