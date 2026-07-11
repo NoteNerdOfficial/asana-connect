@@ -399,9 +399,9 @@ var TaskListRenderer = class extends import_obsidian3.MarkdownRenderChild {
     titleRow.createEl("h4", { text: titleText, cls: "asana-list-title" });
     const refreshBtn = titleRow.createEl("button", {
       cls: "asana-refresh-btn",
-      text: "\u27F3",
       title: "Refresh"
     });
+    (0, import_obsidian3.setIcon)(refreshBtn, "refresh-cw");
     refreshBtn.addEventListener("click", () => this.render());
     if (tasks.length === 0) {
       wrap.createDiv({ cls: "asana-empty", text: "No tasks found." });
@@ -666,9 +666,9 @@ var AsanaTaskView = class extends import_obsidian6.ItemView {
     const controls = header.createDiv({ cls: "asana-sidebar-controls" });
     const refreshBtn = controls.createEl("button", {
       cls: "asana-icon-btn",
-      title: "Refresh",
-      text: "\u27F3"
+      title: "Refresh"
     });
+    (0, import_obsidian6.setIcon)(refreshBtn, "refresh-cw");
     refreshBtn.addEventListener("click", () => this.refresh());
     if (this.tasks.length === 0) {
       container.createEl("p", { text: "No open tasks.", cls: "asana-empty" });

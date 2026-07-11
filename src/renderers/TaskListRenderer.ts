@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Notice } from "obsidian";
+import { MarkdownRenderChild, Notice, setIcon } from "obsidian";
 import { AsanaAPI } from "../api";
 import { AsanaPluginSettings, AsanaTask } from "../types";
 
@@ -103,9 +103,9 @@ export class TaskListRenderer extends MarkdownRenderChild {
     titleRow.createEl("h4", { text: titleText, cls: "asana-list-title" });
     const refreshBtn = titleRow.createEl("button", {
       cls: "asana-refresh-btn",
-      text: "⟳",
       title: "Refresh",
     });
+    setIcon(refreshBtn, "refresh-cw");
     refreshBtn.addEventListener("click", () => this.render());
 
     if (tasks.length === 0) {

@@ -1,6 +1,6 @@
 {
-  "id": "obsidian-asana",
-  "name": "Asana",
+  "id": "asana-connect",
+  "name": "Asana Connect",
   "version": "1.0.0",
   "minAppVersion": "1.4.0",
   "description": "Embed, create, and sync Asana tasks inside Obsidian. Supports any workspace or project.",

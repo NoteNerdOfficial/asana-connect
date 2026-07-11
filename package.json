@@ -1,5 +1,5 @@
 {
-  "name": "obsidian-asana",
+  "name": "asana-connect",
   "version": "1.0.0",
   "description": "Asana integration plugin for Obsidian",
   "main": "main.js",

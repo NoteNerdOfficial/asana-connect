@@ -1,6 +1,8 @@
-# Obsidian Asana Plugin
+# Asana Connect
 
 Embed, create, search, and sync Asana tasks directly inside Obsidian. Works with any Asana workspace or project.
+
+![Asana Connect overview — task embed, task list block, and My Tasks sidebar in one note](screenshots/overview.png)
 
 ## Setup
 
@@ -32,6 +34,10 @@ https://app.asana.com/0/project/1234567890/f
 ````
 
 Renders: task name, checkbox (click to complete/reopen), assignee, due date (red if overdue), project, description, and custom fields.
+
+| Task connected in Obsidian from Asana                               |
+| ------------------------------------------------------------------- |
+| ![Task embed showing an open task](screenshots/task-embed-open.png) |
 
 ### 2. Task list block
 
@@ -70,6 +76,12 @@ limit: 50
 | `show-completed` | `true` / `false` | settings default |
 | `title` | any string | `"My Tasks"` / `"Project Tasks"` |
 
+| Asana list block                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------ |
+| ![Task list block with a custom title, showing open tasks with due dates and assignees](screenshots/task-list-block.png) |
+
+
+
 ### 3. My Tasks sidebar
 
 Click the checkmark ribbon icon or run `Asana: Open My Tasks sidebar` from the command palette.
@@ -80,15 +92,25 @@ Auto-refreshes on a configurable interval (default 5 min).
 
 ### 4. Create tasks
 
-Command palette → `Asana: Create Asana task`
+Command palette → `Asana Connect: Create Asana task`
 
 A modal with: name, description, due date, assignee, workspace GID, project GID.
 
 **Create from selected text:** select text in a note → command palette → `Asana: Create Asana task from selection and insert link`. Creates the task pre-filled with the selection and inserts a markdown link back into the note.
 
+| Create Task in Obsidian                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------ |
+| ![Create Asana Task modal filled out with a name, description, due date, and workspace GID](screenshots/create-task-modal.png) |
+
+The task created above shows up in Asana immediately — no extra sync step:
+
+| Task created in Asana from Obsidian                                                                    |
+| ------------------------------------------------------------------------------------------------------ |
+| ![Asana task list after — the new task created from Obsidian now appears](screenshots/asana-after.png) |
+
 ### 5. Search and insert
 
-`Asana: Search Asana tasks and insert link` — fuzzy search your tasks, inserts `[Task Name](url)` at cursor.
+`Asana Connect: Search Asana tasks and insert link` — fuzzy search your tasks, inserts `[Task Name](url)` at cursor.
 
 `Asana: Search Asana tasks and embed block` — same search, inserts an `asana-task` code block instead.
 

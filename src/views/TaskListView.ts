@@ -1,4 +1,4 @@
-import { ItemView, Notice, WorkspaceLeaf } from "obsidian";
+import { ItemView, Notice, setIcon, WorkspaceLeaf } from "obsidian";
 import { AsanaAPI } from "../api";
 import { AsanaPluginSettings, AsanaTask } from "../types";
 
@@ -92,8 +92,8 @@ export class AsanaTaskView extends ItemView {
     const refreshBtn = controls.createEl("button", {
       cls: "asana-icon-btn",
       title: "Refresh",
-      text: "⟳",
     });
+    setIcon(refreshBtn, "refresh-cw");
     refreshBtn.addEventListener("click", () => this.refresh());
 
     if (this.tasks.length === 0) {
