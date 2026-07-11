@@ -1,6 +1,7 @@
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import type AsanaPlugin from "./main";
 import { AsanaAPI } from "./api";
+import { errorMessage } from "./errors";
 
 export class AsanaSettingTab extends PluginSettingTab {
   plugin: AsanaPlugin;
@@ -13,8 +14,6 @@ export class AsanaSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
-
-    containerEl.createEl("h2", { text: "Asana Plugin Settings" });
 
     new Setting(containerEl)
       .setName("Personal Access Token")
@@ -49,14 +48,14 @@ export class AsanaSettingTab extends PluginSettingTab {
               await this.plugin.saveSettings();
               this.display();
             } catch (e) {
-              new Notice(`Connection failed: ${e.message}`);
+              new Notice(`Connection failed: ${errorMessage(e)}`);
             } finally {
               btn.setButtonText("Connect").setDisabled(false);
             }
           })
       );
 
-    containerEl.createEl("h3", { text: "Defaults" });
+    new Setting(containerEl).setName("Defaults").setHeading();
 
     new Setting(containerEl)
       .setName("Default workspace GID")
@@ -110,7 +109,7 @@ export class AsanaSettingTab extends PluginSettingTab {
           })
       );
 
-    containerEl.createEl("h3", { text: "Display" });
+    new Setting(containerEl).setName("Display").setHeading();
 
     new Setting(containerEl)
       .setName("Show completed tasks in lists")

@@ -73,3 +73,12 @@ export const DEFAULT_SETTINGS: AsanaPluginSettings = {
   showCompletedTasks: false,
   taskListRefreshInterval: 300,
 };
+
+export interface AsanaFrontmatter {
+  "asana-task-gid"?: string;
+  "asana-task-url"?: string;
+  "asana-task-name"?: string;
+  "asana-task-completed"?: boolean;
+  "asana-due-on"?: string;
+  "asana-assignee"?: string;
+}

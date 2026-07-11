@@ -1,5 +1,6 @@
 import { MarkdownRenderChild, Notice, setIcon } from "obsidian";
 import { AsanaAPI } from "../api";
+import { errorMessage } from "../errors";
 import { AsanaPluginSettings, AsanaTask } from "../types";
 
 interface TaskListOptions {
@@ -23,8 +24,8 @@ export class TaskListRenderer extends MarkdownRenderChild {
     this.options = this.parseOptions(source);
   }
 
-  async onload() {
-    await this.render();
+  onload() {
+    void this.render();
   }
 
   parseOptions(source: string): TaskListOptions {
@@ -90,7 +91,7 @@ export class TaskListRenderer extends MarkdownRenderChild {
     } catch (e) {
       this.containerEl.empty();
       const err = this.containerEl.createDiv({ cls: "asana-error" });
-      err.setText("Asana: " + e.message);
+      err.setText("Asana: " + errorMessage(e));
     }
   }
 
@@ -106,7 +107,9 @@ export class TaskListRenderer extends MarkdownRenderChild {
       title: "Refresh",
     });
     setIcon(refreshBtn, "refresh-cw");
-    refreshBtn.addEventListener("click", () => this.render());
+    refreshBtn.addEventListener("click", () => {
+      void this.render();
+    });
 
     if (tasks.length === 0) {
       wrap.createDiv({ cls: "asana-empty", text: "No tasks found." });
@@ -119,7 +122,7 @@ export class TaskListRenderer extends MarkdownRenderChild {
       const checkbox = li.createEl("input", {
         type: "checkbox",
         cls: "asana-task-checkbox",
-      }) as HTMLInputElement;
+      });
       checkbox.checked = task.completed;
 
       const info = li.createDiv({ cls: "asana-task-list-info" });
@@ -142,19 +145,23 @@ export class TaskListRenderer extends MarkdownRenderChild {
         sub.createSpan({ cls: "asana-meta-chip", text: task.assignee.name });
       }
 
-      checkbox.addEventListener("change", async () => {
-        try {
-          if (checkbox.checked) {
-            await api.completeTask(task.gid);
-          } else {
-            await api.uncompleteTask(task.gid);
-          }
-          link.toggleClass("asana-completed", checkbox.checked);
-        } catch (e) {
-          checkbox.checked = !checkbox.checked;
-          new Notice("Failed to update task: " + e.message);
-        }
+      checkbox.addEventListener("change", () => {
+        void this.toggleComplete(task, checkbox, link, api);
       });
+    }
+  }
+
+  async toggleComplete(task: AsanaTask, checkbox: HTMLInputElement, link: HTMLElement, api: AsanaAPI) {
+    try {
+      if (checkbox.checked) {
+        await api.completeTask(task.gid);
+      } else {
+        await api.uncompleteTask(task.gid);
+      }
+      link.toggleClass("asana-completed", checkbox.checked);
+    } catch (e) {
+      checkbox.checked = !checkbox.checked;
+      new Notice("Failed to update task: " + errorMessage(e));
     }
   }
 }

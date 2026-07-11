@@ -1,5 +1,6 @@
 import { ItemView, Notice, setIcon, WorkspaceLeaf } from "obsidian";
 import { AsanaAPI } from "../api";
+import { errorMessage } from "../errors";
 import { AsanaPluginSettings, AsanaTask } from "../types";
 
 export const ASANA_TASK_VIEW_TYPE = "asana-task-view";
@@ -38,7 +39,9 @@ export class AsanaTaskView extends ItemView {
     this.stopAutoRefresh();
     const interval = this.getSettings().taskListRefreshInterval;
     if (interval > 0) {
-      this.refreshTimer = window.setInterval(() => this.refresh(), interval * 1000);
+      this.refreshTimer = window.setInterval(() => {
+        void this.refresh();
+      }, interval * 1000);
     }
   }
 
@@ -62,7 +65,7 @@ export class AsanaTaskView extends ItemView {
       return;
     }
 
-    container.createEl("div", { cls: "asana-loading", text: "Loading tasks…" });
+    container.createDiv({ cls: "asana-loading", text: "Loading tasks…" });
     try {
       const api = new AsanaAPI(settings.pat);
       if (!settings.defaultWorkspaceGid) {
@@ -81,7 +84,7 @@ export class AsanaTaskView extends ItemView {
       this.render(container, api);
     } catch (e) {
       container.empty();
-      container.createEl("p", { text: "Error: " + e.message, cls: "asana-error" });
+      container.createEl("p", { text: "Error: " + errorMessage(e), cls: "asana-error" });
     }
   }
 
@@ -94,7 +97,9 @@ export class AsanaTaskView extends ItemView {
       title: "Refresh",
     });
     setIcon(refreshBtn, "refresh-cw");
-    refreshBtn.addEventListener("click", () => this.refresh());
+    refreshBtn.addEventListener("click", () => {
+      void this.refresh();
+    });
 
     if (this.tasks.length === 0) {
       container.createEl("p", { text: "No open tasks.", cls: "asana-empty" });
@@ -144,7 +149,7 @@ export class AsanaTaskView extends ItemView {
       const checkbox = li.createEl("input", {
         type: "checkbox",
         cls: "asana-task-checkbox",
-      }) as HTMLInputElement;
+      });
       checkbox.checked = task.completed;
 
       const info = li.createDiv({ cls: "asana-sidebar-item-info" });
@@ -156,26 +161,36 @@ export class AsanaTaskView extends ItemView {
       if (task.completed) link.addClass("asana-completed");
 
       if (task.projects.length > 0) {
-        info.createEl("span", {
+        info.createSpan({
           text: task.projects[0].name,
           cls: "asana-sidebar-project",
         });
       }
 
-      checkbox.addEventListener("change", async () => {
-        try {
-          if (checkbox.checked) {
-            await api.completeTask(task.gid);
-          } else {
-            await api.uncompleteTask(task.gid);
-          }
-          link.toggleClass("asana-completed", checkbox.checked);
-          li.toggleClass("asana-item-done", checkbox.checked);
-        } catch (e) {
-          checkbox.checked = !checkbox.checked;
-          new Notice("Failed to update task: " + e.message);
-        }
+      checkbox.addEventListener("change", () => {
+        void this.toggleComplete(task, checkbox, link, li, api);
       });
+    }
+  }
+
+  async toggleComplete(
+    task: AsanaTask,
+    checkbox: HTMLInputElement,
+    link: HTMLElement,
+    li: HTMLElement,
+    api: AsanaAPI
+  ) {
+    try {
+      if (checkbox.checked) {
+        await api.completeTask(task.gid);
+      } else {
+        await api.uncompleteTask(task.gid);
+      }
+      link.toggleClass("asana-completed", checkbox.checked);
+      li.toggleClass("asana-item-done", checkbox.checked);
+    } catch (e) {
+      checkbox.checked = !checkbox.checked;
+      new Notice("Failed to update task: " + errorMessage(e));
     }
   }
 }

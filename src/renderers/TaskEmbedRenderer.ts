@@ -1,5 +1,6 @@
 import { MarkdownRenderChild } from "obsidian";
 import { AsanaAPI } from "../api";
+import { errorMessage } from "../errors";
 import { AsanaPluginSettings, AsanaTask } from "../types";
 
 export class TaskEmbedRenderer extends MarkdownRenderChild {
@@ -11,8 +12,8 @@ export class TaskEmbedRenderer extends MarkdownRenderChild {
     super(containerEl);
   }
 
-  async onload() {
-    await this.render();
+  onload() {
+    void this.render();
   }
 
   async render() {
@@ -30,7 +31,7 @@ export class TaskEmbedRenderer extends MarkdownRenderChild {
       this.containerEl.empty();
       this.renderTask(task);
     } catch (e) {
-      this.renderError(e.message);
+      this.renderError(errorMessage(e));
     }
   }
 
@@ -47,20 +48,10 @@ export class TaskEmbedRenderer extends MarkdownRenderChild {
     const checkbox = header.createEl("input", {
       type: "checkbox",
       cls: "asana-task-checkbox",
-    }) as HTMLInputElement;
+    });
     checkbox.checked = task.completed;
-    checkbox.addEventListener("change", async () => {
-      try {
-        const api = new AsanaAPI(this.settings.pat);
-        if (checkbox.checked) {
-          await api.completeTask(task.gid);
-        } else {
-          await api.uncompleteTask(task.gid);
-        }
-        titleEl.toggleClass("asana-completed", checkbox.checked);
-      } catch (e) {
-        checkbox.checked = !checkbox.checked;
-      }
+    checkbox.addEventListener("change", () => {
+      void this.toggleComplete(task, checkbox, titleEl);
     });
 
     const titleEl = header.createEl("a", {
@@ -103,6 +94,20 @@ export class TaskEmbedRenderer extends MarkdownRenderChild {
         row.createSpan({ cls: "asana-cf-name", text: cf.name + ":" });
         row.createSpan({ cls: "asana-cf-value", text: cf.display_value });
       }
+    }
+  }
+
+  async toggleComplete(task: AsanaTask, checkbox: HTMLInputElement, titleEl: HTMLElement) {
+    try {
+      const api = new AsanaAPI(this.settings.pat);
+      if (checkbox.checked) {
+        await api.completeTask(task.gid);
+      } else {
+        await api.uncompleteTask(task.gid);
+      }
+      titleEl.toggleClass("asana-completed", checkbox.checked);
+    } catch (e) {
+      checkbox.checked = !checkbox.checked;
     }
   }
 

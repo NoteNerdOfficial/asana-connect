@@ -27,9 +27,10 @@ __export(main_exports, {
   default: () => AsanaPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian7 = require("obsidian");
+var import_obsidian8 = require("obsidian");
 
 // src/api.ts
+var import_obsidian = require("obsidian");
 var BASE = "https://app.asana.com/api/1.0";
 var TASK_FIELDS = "gid,name,notes,completed,due_on,assignee.name,assignee.gid,projects.gid,projects.name,tags.gid,tags.name,permalink_url,created_at,modified_at,custom_fields.gid,custom_fields.name,custom_fields.display_value";
 var AsanaAPI = class {
@@ -37,26 +38,26 @@ var AsanaAPI = class {
     this.pat = pat;
   }
   async request(path, options = {}) {
-    var _a;
-    const res = await fetch(`${BASE}${path}`, {
-      ...options,
+    var _a, _b;
+    const res = await (0, import_obsidian.requestUrl)({
+      url: `${BASE}${path}`,
+      method: (_a = options.method) != null ? _a : "GET",
       headers: {
         Authorization: `Bearer ${this.pat}`,
         "Content-Type": "application/json",
-        ...(_a = options.headers) != null ? _a : {}
-      }
+        ...(_b = options.headers) != null ? _b : {}
+      },
+      body: options.body,
+      throw: false
     });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`Asana API error ${res.status}: ${body}`);
+    if (res.status >= 400) {
+      throw new Error(`Asana API error ${res.status}: ${res.text}`);
     }
-    const json = await res.json();
+    const json = res.json;
     return json.data;
   }
   async getMe() {
-    return this.request(
-      "/users/me?opt_fields=gid,name,email,workspaces.gid,workspaces.name"
-    );
+    return this.request("/users/me?opt_fields=gid,name,email,workspaces.gid,workspaces.name");
   }
   async getTask(gid) {
     return this.request(`/tasks/${gid}?opt_fields=${TASK_FIELDS}`);
@@ -119,9 +120,14 @@ var AsanaAPI = class {
   }
 };
 
+// src/errors.ts
+function errorMessage(e) {
+  return e instanceof Error ? e.message : String(e);
+}
+
 // src/settings.ts
-var import_obsidian = require("obsidian");
-var AsanaSettingTab = class extends import_obsidian.PluginSettingTab {
+var import_obsidian2 = require("obsidian");
+var AsanaSettingTab = class extends import_obsidian2.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -129,65 +135,64 @@ var AsanaSettingTab = class extends import_obsidian.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    containerEl.createEl("h2", { text: "Asana Plugin Settings" });
-    new import_obsidian.Setting(containerEl).setName("Personal Access Token").setDesc("Create one at Account Settings \u2192 Apps \u2192 Personal Access Tokens in Asana.").addText(
+    new import_obsidian2.Setting(containerEl).setName("Personal Access Token").setDesc("Create one at Account Settings \u2192 Apps \u2192 Personal Access Tokens in Asana.").addText(
       (text) => text.setPlaceholder("0/xxxxxxxxxxxxxxxxxxxxxxxxxxxx").setValue(this.plugin.settings.pat).onChange(async (value) => {
         this.plugin.settings.pat = value.trim();
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Verify connection").setDesc("Test your PAT and load available workspaces.").addButton(
+    new import_obsidian2.Setting(containerEl).setName("Verify connection").setDesc("Test your PAT and load available workspaces.").addButton(
       (btn) => btn.setButtonText("Connect").setCta().onClick(async () => {
         var _a, _b;
         btn.setButtonText("Connecting\u2026").setDisabled(true);
         try {
           const api = new AsanaAPI(this.plugin.settings.pat);
           const me = await api.getMe();
-          new import_obsidian.Notice(`Connected as ${me.name}`);
+          new import_obsidian2.Notice(`Connected as ${me.name}`);
           this.plugin.settings.defaultWorkspaceGid = this.plugin.settings.defaultWorkspaceGid || ((_a = me.workspaces[0]) == null ? void 0 : _a.gid) || "";
           this.plugin.settings.defaultWorkspaceName = this.plugin.settings.defaultWorkspaceName || ((_b = me.workspaces[0]) == null ? void 0 : _b.name) || "";
           await this.plugin.saveSettings();
           this.display();
         } catch (e) {
-          new import_obsidian.Notice(`Connection failed: ${e.message}`);
+          new import_obsidian2.Notice(`Connection failed: ${errorMessage(e)}`);
         } finally {
           btn.setButtonText("Connect").setDisabled(false);
         }
       })
     );
-    containerEl.createEl("h3", { text: "Defaults" });
-    new import_obsidian.Setting(containerEl).setName("Default workspace GID").setDesc("Workspace GID to use when none is specified in a code block. Find it in your Asana URL.").addText(
+    new import_obsidian2.Setting(containerEl).setName("Defaults").setHeading();
+    new import_obsidian2.Setting(containerEl).setName("Default workspace GID").setDesc("Workspace GID to use when none is specified in a code block. Find it in your Asana URL.").addText(
       (text) => text.setPlaceholder("123456789").setValue(this.plugin.settings.defaultWorkspaceGid).onChange(async (value) => {
         this.plugin.settings.defaultWorkspaceGid = value.trim();
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Default workspace name").setDesc("Display name for the default workspace.").addText(
+    new import_obsidian2.Setting(containerEl).setName("Default workspace name").setDesc("Display name for the default workspace.").addText(
       (text) => text.setPlaceholder("My Organisation").setValue(this.plugin.settings.defaultWorkspaceName).onChange(async (value) => {
         this.plugin.settings.defaultWorkspaceName = value.trim();
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Default project GID").setDesc("Pre-selected project GID when creating tasks. Leave blank for workspace-level tasks.").addText(
+    new import_obsidian2.Setting(containerEl).setName("Default project GID").setDesc("Pre-selected project GID when creating tasks. Leave blank for workspace-level tasks.").addText(
       (text) => text.setPlaceholder("987654321").setValue(this.plugin.settings.defaultProjectGid).onChange(async (value) => {
         this.plugin.settings.defaultProjectGid = value.trim();
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Default assignee").setDesc('Use "me" to assign to yourself, or paste a user GID.').addText(
+    new import_obsidian2.Setting(containerEl).setName("Default assignee").setDesc('Use "me" to assign to yourself, or paste a user GID.').addText(
       (text) => text.setPlaceholder("me").setValue(this.plugin.settings.defaultAssignee).onChange(async (value) => {
         this.plugin.settings.defaultAssignee = value.trim();
         await this.plugin.saveSettings();
       })
     );
-    containerEl.createEl("h3", { text: "Display" });
-    new import_obsidian.Setting(containerEl).setName("Show completed tasks in lists").setDesc("When enabled, task list views will include completed tasks.").addToggle(
+    new import_obsidian2.Setting(containerEl).setName("Display").setHeading();
+    new import_obsidian2.Setting(containerEl).setName("Show completed tasks in lists").setDesc("When enabled, task list views will include completed tasks.").addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.showCompletedTasks).onChange(async (value) => {
         this.plugin.settings.showCompletedTasks = value;
         await this.plugin.saveSettings();
       })
     );
-    new import_obsidian.Setting(containerEl).setName("Task list refresh interval (seconds)").setDesc("How often the task list sidebar auto-refreshes. Set to 0 to disable.").addText(
+    new import_obsidian2.Setting(containerEl).setName("Task list refresh interval (seconds)").setDesc("How often the task list sidebar auto-refreshes. Set to 0 to disable.").addText(
       (text) => text.setPlaceholder("300").setValue(String(this.plugin.settings.taskListRefreshInterval)).onChange(async (value) => {
         const n = parseInt(value);
         if (!isNaN(n)) {
@@ -212,15 +217,15 @@ var DEFAULT_SETTINGS = {
 };
 
 // src/renderers/TaskEmbedRenderer.ts
-var import_obsidian2 = require("obsidian");
-var TaskEmbedRenderer = class extends import_obsidian2.MarkdownRenderChild {
+var import_obsidian3 = require("obsidian");
+var TaskEmbedRenderer = class extends import_obsidian3.MarkdownRenderChild {
   constructor(containerEl, source, settings) {
     super(containerEl);
     this.source = source;
     this.settings = settings;
   }
-  async onload() {
-    await this.render();
+  onload() {
+    void this.render();
   }
   async render() {
     this.containerEl.empty();
@@ -237,7 +242,7 @@ var TaskEmbedRenderer = class extends import_obsidian2.MarkdownRenderChild {
       this.containerEl.empty();
       this.renderTask(task);
     } catch (e) {
-      this.renderError(e.message);
+      this.renderError(errorMessage(e));
     }
   }
   resolveGid(raw) {
@@ -254,18 +259,8 @@ var TaskEmbedRenderer = class extends import_obsidian2.MarkdownRenderChild {
       cls: "asana-task-checkbox"
     });
     checkbox.checked = task.completed;
-    checkbox.addEventListener("change", async () => {
-      try {
-        const api = new AsanaAPI(this.settings.pat);
-        if (checkbox.checked) {
-          await api.completeTask(task.gid);
-        } else {
-          await api.uncompleteTask(task.gid);
-        }
-        titleEl.toggleClass("asana-completed", checkbox.checked);
-      } catch (e) {
-        checkbox.checked = !checkbox.checked;
-      }
+    checkbox.addEventListener("change", () => {
+      void this.toggleComplete(task, checkbox, titleEl);
     });
     const titleEl = header.createEl("a", {
       text: task.name,
@@ -308,6 +303,19 @@ var TaskEmbedRenderer = class extends import_obsidian2.MarkdownRenderChild {
       }
     }
   }
+  async toggleComplete(task, checkbox, titleEl) {
+    try {
+      const api = new AsanaAPI(this.settings.pat);
+      if (checkbox.checked) {
+        await api.completeTask(task.gid);
+      } else {
+        await api.uncompleteTask(task.gid);
+      }
+      titleEl.toggleClass("asana-completed", checkbox.checked);
+    } catch (e) {
+      checkbox.checked = !checkbox.checked;
+    }
+  }
   renderError(msg) {
     this.containerEl.empty();
     const err = this.containerEl.createDiv({ cls: "asana-error" });
@@ -316,16 +324,16 @@ var TaskEmbedRenderer = class extends import_obsidian2.MarkdownRenderChild {
 };
 
 // src/renderers/TaskListRenderer.ts
-var import_obsidian3 = require("obsidian");
-var TaskListRenderer = class extends import_obsidian3.MarkdownRenderChild {
+var import_obsidian4 = require("obsidian");
+var TaskListRenderer = class extends import_obsidian4.MarkdownRenderChild {
   constructor(containerEl, source, settings) {
     super(containerEl);
     this.source = source;
     this.settings = settings;
     this.options = this.parseOptions(source);
   }
-  async onload() {
-    await this.render();
+  onload() {
+    void this.render();
   }
   parseOptions(source) {
     const opts = {
@@ -389,7 +397,7 @@ var TaskListRenderer = class extends import_obsidian3.MarkdownRenderChild {
     } catch (e) {
       this.containerEl.empty();
       const err = this.containerEl.createDiv({ cls: "asana-error" });
-      err.setText("Asana: " + e.message);
+      err.setText("Asana: " + errorMessage(e));
     }
   }
   renderList(tasks, api) {
@@ -401,8 +409,10 @@ var TaskListRenderer = class extends import_obsidian3.MarkdownRenderChild {
       cls: "asana-refresh-btn",
       title: "Refresh"
     });
-    (0, import_obsidian3.setIcon)(refreshBtn, "refresh-cw");
-    refreshBtn.addEventListener("click", () => this.render());
+    (0, import_obsidian4.setIcon)(refreshBtn, "refresh-cw");
+    refreshBtn.addEventListener("click", () => {
+      void this.render();
+    });
     if (tasks.length === 0) {
       wrap.createDiv({ cls: "asana-empty", text: "No tasks found." });
       return;
@@ -434,26 +444,29 @@ var TaskListRenderer = class extends import_obsidian3.MarkdownRenderChild {
       if (task.assignee) {
         sub.createSpan({ cls: "asana-meta-chip", text: task.assignee.name });
       }
-      checkbox.addEventListener("change", async () => {
-        try {
-          if (checkbox.checked) {
-            await api.completeTask(task.gid);
-          } else {
-            await api.uncompleteTask(task.gid);
-          }
-          link.toggleClass("asana-completed", checkbox.checked);
-        } catch (e) {
-          checkbox.checked = !checkbox.checked;
-          new import_obsidian3.Notice("Failed to update task: " + e.message);
-        }
+      checkbox.addEventListener("change", () => {
+        void this.toggleComplete(task, checkbox, link, api);
       });
+    }
+  }
+  async toggleComplete(task, checkbox, link, api) {
+    try {
+      if (checkbox.checked) {
+        await api.completeTask(task.gid);
+      } else {
+        await api.uncompleteTask(task.gid);
+      }
+      link.toggleClass("asana-completed", checkbox.checked);
+    } catch (e) {
+      checkbox.checked = !checkbox.checked;
+      new import_obsidian4.Notice("Failed to update task: " + errorMessage(e));
     }
   }
 };
 
 // src/modals/CreateTaskModal.ts
-var import_obsidian4 = require("obsidian");
-var CreateTaskModal = class extends import_obsidian4.Modal {
+var import_obsidian5 = require("obsidian");
+var CreateTaskModal = class extends import_obsidian5.Modal {
   constructor(app, settings, onCreated) {
     super(app);
     this.settings = settings;
@@ -473,29 +486,29 @@ var CreateTaskModal = class extends import_obsidian4.Modal {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.createEl("h2", { text: "Create Asana Task" });
-    this.loadWorkspacesAndProjects();
-    new import_obsidian4.Setting(contentEl).setName("Task name").setClass("asana-modal-required").addText((text) => text.setPlaceholder("Task name").setValue(this.name).onChange((v) => this.name = v));
-    new import_obsidian4.Setting(contentEl).setName("Description").addTextArea(
+    void this.loadWorkspacesAndProjects();
+    new import_obsidian5.Setting(contentEl).setName("Task name").setClass("asana-modal-required").addText((text) => text.setPlaceholder("Task name").setValue(this.name).onChange((v) => this.name = v));
+    new import_obsidian5.Setting(contentEl).setName("Description").addTextArea(
       (ta) => ta.setPlaceholder("Optional description\u2026").setValue(this.notes).onChange((v) => this.notes = v)
     );
-    new import_obsidian4.Setting(contentEl).setName("Due date").addText(
+    new import_obsidian5.Setting(contentEl).setName("Due date").addText(
       (text) => text.setPlaceholder("YYYY-MM-DD").setValue(this.dueOn).onChange((v) => this.dueOn = v)
     );
-    new import_obsidian4.Setting(contentEl).setName("Assignee").setDesc('Use "me" for yourself, or paste a user GID.').addText(
+    new import_obsidian5.Setting(contentEl).setName("Assignee").setDesc('Use "me" for yourself, or paste a user GID.').addText(
       (text) => text.setPlaceholder("me").setValue(this.assignee).onChange((v) => this.assignee = v)
     );
-    new import_obsidian4.Setting(contentEl).setName("Workspace GID").setDesc("Leave blank to use the default workspace.").addText(
+    new import_obsidian5.Setting(contentEl).setName("Workspace GID").setDesc("Leave blank to use the default workspace.").addText(
       (text) => text.setPlaceholder(this.settings.defaultWorkspaceGid).setValue(this.workspaceGid).onChange((v) => {
         this.workspaceGid = v;
       })
     );
-    new import_obsidian4.Setting(contentEl).setName("Project GID").setDesc("Optional. Leave blank for a workspace-level task.").addText(
+    new import_obsidian5.Setting(contentEl).setName("Project GID").setDesc("Optional. Leave blank for a workspace-level task.").addText(
       (text) => text.setPlaceholder(this.settings.defaultProjectGid).setValue(this.projectGid).onChange((v) => this.projectGid = v)
     );
-    new import_obsidian4.Setting(contentEl).addButton(
+    new import_obsidian5.Setting(contentEl).addButton(
       (btn) => btn.setButtonText("Create Task").setCta().onClick(async () => {
         if (!this.name.trim()) {
-          new import_obsidian4.Notice("Task name is required.");
+          new import_obsidian5.Notice("Task name is required.");
           return;
         }
         btn.setButtonText("Creating\u2026").setDisabled(true);
@@ -511,13 +524,13 @@ var CreateTaskModal = class extends import_obsidian4.Modal {
             projects: projGid ? [projGid] : void 0,
             assignee: this.assignee.trim() || "me"
           });
-          new import_obsidian4.Notice(`Created: ${task.name}`);
+          new import_obsidian5.Notice(`Created: ${task.name}`);
           if (this.onCreated) {
             this.onCreated(task.permalink_url, task.name);
           }
           this.close();
         } catch (e) {
-          new import_obsidian4.Notice("Failed to create task: " + e.message);
+          new import_obsidian5.Notice("Failed to create task: " + errorMessage(e));
           btn.setButtonText("Create Task").setDisabled(false);
         }
       })
@@ -536,61 +549,57 @@ var CreateTaskModal = class extends import_obsidian4.Modal {
 };
 
 // src/modals/TaskSearchModal.ts
-var import_obsidian5 = require("obsidian");
-var TaskSearchModal = class extends import_obsidian5.FuzzySuggestModal {
+var import_obsidian6 = require("obsidian");
+var TaskSearchModal = class extends import_obsidian6.SuggestModal {
   constructor(app, settings, onSelect) {
     super(app);
     this.settings = settings;
     this.onSelect = onSelect;
     this.tasks = [];
-    this.loaded = false;
+    this.searchToken = 0;
     this.setPlaceholder("Search Asana tasks\u2026");
-    this.preload();
+    void this.preload();
   }
   async preload() {
     try {
       const api = new AsanaAPI(this.settings.pat);
       this.tasks = await api.getMyTasks(this.settings.defaultWorkspaceGid);
-      this.loaded = true;
     } catch (e) {
     }
   }
-  getItems() {
-    return this.tasks;
+  async getSuggestions(query) {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
+      return this.tasks;
+    }
+    const token = ++this.searchToken;
+    await new Promise((resolve) => window.setTimeout(resolve, 400));
+    if (token !== this.searchToken) {
+      return [];
+    }
+    try {
+      const api = new AsanaAPI(this.settings.pat);
+      return await api.searchTasks(this.settings.defaultWorkspaceGid, trimmed);
+    } catch (e) {
+      new import_obsidian6.Notice("Search failed: " + errorMessage(e));
+      return [];
+    }
   }
-  getItemText(task) {
-    return task.name + " " + (task.projects.map((p) => p.name).join(" ") || "");
+  renderSuggestion(task, el) {
+    el.createEl("div", { text: task.name });
+    if (task.projects.length > 0) {
+      el.createEl("small", { text: task.projects.map((p) => p.name).join(", ") });
+    }
   }
-  onChooseItem(task) {
-    this.onSelect(task);
-  }
-  async onOpen() {
-    super.onOpen();
-    const inputEl = this.inputEl;
-    let debounceTimer;
-    inputEl.addEventListener("input", () => {
-      window.clearTimeout(debounceTimer);
-      const query = inputEl.value.trim();
-      if (query.length < 2)
-        return;
-      debounceTimer = window.setTimeout(async () => {
-        try {
-          const api = new AsanaAPI(this.settings.pat);
-          const results = await api.searchTasks(this.settings.defaultWorkspaceGid, query);
-          this.tasks = results;
-          this.updateSuggestions();
-        } catch (e) {
-          new import_obsidian5.Notice("Search failed: " + e.message);
-        }
-      }, 400);
-    });
+  onChooseSuggestion(task) {
+    void this.onSelect(task);
   }
 };
 
 // src/views/TaskListView.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 var ASANA_TASK_VIEW_TYPE = "asana-task-view";
-var AsanaTaskView = class extends import_obsidian6.ItemView {
+var AsanaTaskView = class extends import_obsidian7.ItemView {
   constructor(leaf, getSettings) {
     super(leaf);
     this.getSettings = getSettings;
@@ -618,7 +627,9 @@ var AsanaTaskView = class extends import_obsidian6.ItemView {
     this.stopAutoRefresh();
     const interval = this.getSettings().taskListRefreshInterval;
     if (interval > 0) {
-      this.refreshTimer = window.setInterval(() => this.refresh(), interval * 1e3);
+      this.refreshTimer = window.setInterval(() => {
+        void this.refresh();
+      }, interval * 1e3);
     }
   }
   stopAutoRefresh() {
@@ -638,7 +649,7 @@ var AsanaTaskView = class extends import_obsidian6.ItemView {
       });
       return;
     }
-    container.createEl("div", { cls: "asana-loading", text: "Loading tasks\u2026" });
+    container.createDiv({ cls: "asana-loading", text: "Loading tasks\u2026" });
     try {
       const api = new AsanaAPI(settings.pat);
       if (!settings.defaultWorkspaceGid) {
@@ -657,7 +668,7 @@ var AsanaTaskView = class extends import_obsidian6.ItemView {
       this.render(container, api);
     } catch (e) {
       container.empty();
-      container.createEl("p", { text: "Error: " + e.message, cls: "asana-error" });
+      container.createEl("p", { text: "Error: " + errorMessage(e), cls: "asana-error" });
     }
   }
   render(container, api) {
@@ -668,8 +679,10 @@ var AsanaTaskView = class extends import_obsidian6.ItemView {
       cls: "asana-icon-btn",
       title: "Refresh"
     });
-    (0, import_obsidian6.setIcon)(refreshBtn, "refresh-cw");
-    refreshBtn.addEventListener("click", () => this.refresh());
+    (0, import_obsidian7.setIcon)(refreshBtn, "refresh-cw");
+    refreshBtn.addEventListener("click", () => {
+      void this.refresh();
+    });
     if (this.tasks.length === 0) {
       container.createEl("p", { text: "No open tasks.", cls: "asana-empty" });
       return;
@@ -722,31 +735,34 @@ var AsanaTaskView = class extends import_obsidian6.ItemView {
       if (task.completed)
         link.addClass("asana-completed");
       if (task.projects.length > 0) {
-        info.createEl("span", {
+        info.createSpan({
           text: task.projects[0].name,
           cls: "asana-sidebar-project"
         });
       }
-      checkbox.addEventListener("change", async () => {
-        try {
-          if (checkbox.checked) {
-            await api.completeTask(task.gid);
-          } else {
-            await api.uncompleteTask(task.gid);
-          }
-          link.toggleClass("asana-completed", checkbox.checked);
-          li.toggleClass("asana-item-done", checkbox.checked);
-        } catch (e) {
-          checkbox.checked = !checkbox.checked;
-          new import_obsidian6.Notice("Failed to update task: " + e.message);
-        }
+      checkbox.addEventListener("change", () => {
+        void this.toggleComplete(task, checkbox, link, li, api);
       });
+    }
+  }
+  async toggleComplete(task, checkbox, link, li, api) {
+    try {
+      if (checkbox.checked) {
+        await api.completeTask(task.gid);
+      } else {
+        await api.uncompleteTask(task.gid);
+      }
+      link.toggleClass("asana-completed", checkbox.checked);
+      li.toggleClass("asana-item-done", checkbox.checked);
+    } catch (e) {
+      checkbox.checked = !checkbox.checked;
+      new import_obsidian7.Notice("Failed to update task: " + errorMessage(e));
     }
   }
 };
 
 // src/main.ts
-var AsanaPlugin = class extends import_obsidian7.Plugin {
+var AsanaPlugin = class extends import_obsidian8.Plugin {
   async onload() {
     await this.loadSettings();
     this.registerView(ASANA_TASK_VIEW_TYPE, (leaf) => {
@@ -818,7 +834,7 @@ ${task.gid}
       id: "link-note-to-task",
       name: "Link this note to an Asana task",
       checkCallback: (checking) => {
-        const view = this.app.workspace.getActiveViewOfType(import_obsidian7.MarkdownView);
+        const view = this.app.workspace.getActiveViewOfType(import_obsidian8.MarkdownView);
         if (!view)
           return false;
         if (checking)
@@ -832,7 +848,7 @@ ${task.gid}
             fm["asana-task-url"] = task.permalink_url;
             fm["asana-task-name"] = task.name;
           });
-          new import_obsidian7.Notice(`Note linked to: ${task.name}`);
+          new import_obsidian8.Notice(`Note linked to: ${task.name}`);
         }).open();
         return true;
       }
@@ -841,12 +857,12 @@ ${task.gid}
       id: "sync-linked-task",
       name: "Sync linked Asana task status",
       checkCallback: (checking) => {
-        const view = this.app.workspace.getActiveViewOfType(import_obsidian7.MarkdownView);
+        const view = this.app.workspace.getActiveViewOfType(import_obsidian8.MarkdownView);
         if (!(view == null ? void 0 : view.file))
           return false;
         if (checking)
           return true;
-        this.syncLinkedTask(view.file);
+        void this.syncLinkedTask(view.file);
         return true;
       }
     });
@@ -854,30 +870,28 @@ ${task.gid}
       id: "complete-linked-task",
       name: "Complete linked Asana task",
       checkCallback: (checking) => {
-        const view = this.app.workspace.getActiveViewOfType(import_obsidian7.MarkdownView);
+        const view = this.app.workspace.getActiveViewOfType(import_obsidian8.MarkdownView);
         if (!(view == null ? void 0 : view.file))
           return false;
         if (checking)
           return true;
-        this.toggleLinkedTaskComplete(view.file, true);
+        void this.toggleLinkedTaskComplete(view.file, true);
         return true;
       }
     });
     this.addRibbonIcon("check-square", "Asana Tasks", () => {
-      this.activateSidebar();
+      void this.activateSidebar();
     });
     this.addSettingTab(new AsanaSettingTab(this.app, this));
     this.app.workspace.onLayoutReady(() => {
       if (this.settings.pat && this.settings.defaultWorkspaceGid) {
-        this.activateSidebar();
+        void this.activateSidebar();
       }
     });
   }
-  async onunload() {
-    this.app.workspace.detachLeavesOfType(ASANA_TASK_VIEW_TYPE);
-  }
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const loaded = await this.loadData();
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
   }
   async saveSettings() {
     await this.saveData(this.settings);
@@ -890,14 +904,14 @@ ${task.gid}
       leaf = (_a = workspace.getRightLeaf(false)) != null ? _a : workspace.getLeaf(true);
       await leaf.setViewState({ type: ASANA_TASK_VIEW_TYPE, active: true });
     }
-    workspace.revealLeaf(leaf);
+    await workspace.revealLeaf(leaf);
   }
   async syncLinkedTask(file) {
     var _a;
     const fm = (_a = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter;
     const gid = fm == null ? void 0 : fm["asana-task-gid"];
     if (!gid) {
-      new import_obsidian7.Notice("No Asana task linked to this note. Use 'Link this note to an Asana task' first.");
+      new import_obsidian8.Notice("No Asana task linked to this note. Use 'Link this note to an Asana task' first.");
       return;
     }
     try {
@@ -910,9 +924,9 @@ ${task.gid}
         f["asana-due-on"] = (_a2 = task.due_on) != null ? _a2 : "";
         f["asana-assignee"] = (_c = (_b = task.assignee) == null ? void 0 : _b.name) != null ? _c : "";
       });
-      new import_obsidian7.Notice(`Synced: ${task.name} (${task.completed ? "completed" : "open"})`);
+      new import_obsidian8.Notice(`Synced: ${task.name} (${task.completed ? "completed" : "open"})`);
     } catch (e) {
-      new import_obsidian7.Notice("Sync failed: " + e.message);
+      new import_obsidian8.Notice("Sync failed: " + errorMessage(e));
     }
   }
   async toggleLinkedTaskComplete(file, complete) {
@@ -920,7 +934,7 @@ ${task.gid}
     const fm = (_a = this.app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter;
     const gid = fm == null ? void 0 : fm["asana-task-gid"];
     if (!gid) {
-      new import_obsidian7.Notice("No Asana task linked to this note.");
+      new import_obsidian8.Notice("No Asana task linked to this note.");
       return;
     }
     try {
@@ -929,9 +943,9 @@ ${task.gid}
       await this.app.fileManager.processFrontMatter(file, (f) => {
         f["asana-task-completed"] = task.completed;
       });
-      new import_obsidian7.Notice(`Task marked ${task.completed ? "open" : "complete"}: ${task.name}`);
+      new import_obsidian8.Notice(`Task marked ${task.completed ? "open" : "complete"}: ${task.name}`);
     } catch (e) {
-      new import_obsidian7.Notice("Failed: " + e.message);
+      new import_obsidian8.Notice("Failed: " + errorMessage(e));
     }
   }
 };

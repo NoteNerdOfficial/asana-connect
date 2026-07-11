@@ -1,7 +1,8 @@
 import { MarkdownView, Notice, Plugin, TFile } from "obsidian";
 import { AsanaAPI } from "./api";
+import { errorMessage } from "./errors";
 import { AsanaSettingTab } from "./settings";
-import { AsanaPluginSettings, DEFAULT_SETTINGS } from "./types";
+import { AsanaFrontmatter, AsanaPluginSettings, DEFAULT_SETTINGS } from "./types";
 import { TaskEmbedRenderer } from "./renderers/TaskEmbedRenderer";
 import { TaskListRenderer } from "./renderers/TaskListRenderer";
 import { CreateTaskModal } from "./modals/CreateTaskModal";
@@ -94,7 +95,7 @@ export default class AsanaPlugin extends Plugin {
         new TaskSearchModal(this.app, this.settings, async (task) => {
           const file = view.file;
           if (!file) return;
-          await this.app.fileManager.processFrontMatter(file, (fm) => {
+          await this.app.fileManager.processFrontMatter(file, (fm: AsanaFrontmatter) => {
             fm["asana-task-gid"] = task.gid;
             fm["asana-task-url"] = task.permalink_url;
             fm["asana-task-name"] = task.name;
@@ -112,7 +113,7 @@ export default class AsanaPlugin extends Plugin {
         const view = this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!view?.file) return false;
         if (checking) return true;
-        this.syncLinkedTask(view.file);
+        void this.syncLinkedTask(view.file);
         return true;
       },
     });
@@ -124,30 +125,27 @@ export default class AsanaPlugin extends Plugin {
         const view = this.app.workspace.getActiveViewOfType(MarkdownView);
         if (!view?.file) return false;
         if (checking) return true;
-        this.toggleLinkedTaskComplete(view.file, true);
+        void this.toggleLinkedTaskComplete(view.file, true);
         return true;
       },
     });
 
     this.addRibbonIcon("check-square", "Asana Tasks", () => {
-      this.activateSidebar();
+      void this.activateSidebar();
     });
 
     this.addSettingTab(new AsanaSettingTab(this.app, this));
 
     this.app.workspace.onLayoutReady(() => {
       if (this.settings.pat && this.settings.defaultWorkspaceGid) {
-        this.activateSidebar();
+        void this.activateSidebar();
       }
     });
   }
 
-  async onunload() {
-    this.app.workspace.detachLeavesOfType(ASANA_TASK_VIEW_TYPE);
-  }
-
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    const loaded = (await this.loadData()) as Partial<AsanaPluginSettings> | null;
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded);
   }
 
   async saveSettings() {
@@ -161,12 +159,12 @@ export default class AsanaPlugin extends Plugin {
       leaf = workspace.getRightLeaf(false) ?? workspace.getLeaf(true);
       await leaf.setViewState({ type: ASANA_TASK_VIEW_TYPE, active: true });
     }
-    workspace.revealLeaf(leaf);
+    await workspace.revealLeaf(leaf);
   }
 
   async syncLinkedTask(file: TFile) {
     const fm = this.app.metadataCache.getFileCache(file)?.frontmatter;
-    const gid = fm?.["asana-task-gid"];
+    const gid = fm?.["asana-task-gid"] as string | undefined;
     if (!gid) {
       new Notice("No Asana task linked to this note. Use 'Link this note to an Asana task' first.");
       return;
@@ -174,7 +172,7 @@ export default class AsanaPlugin extends Plugin {
     try {
       const api = new AsanaAPI(this.settings.pat);
       const task = await api.getTask(gid);
-      await this.app.fileManager.processFrontMatter(file, (f) => {
+      await this.app.fileManager.processFrontMatter(file, (f: AsanaFrontmatter) => {
         f["asana-task-completed"] = task.completed;
         f["asana-task-name"] = task.name;
         f["asana-due-on"] = task.due_on ?? "";
@@ -182,13 +180,13 @@ export default class AsanaPlugin extends Plugin {
       });
       new Notice(`Synced: ${task.name} (${task.completed ? "completed" : "open"})`);
     } catch (e) {
-      new Notice("Sync failed: " + e.message);
+      new Notice("Sync failed: " + errorMessage(e));
     }
   }
 
   async toggleLinkedTaskComplete(file: TFile, complete: boolean) {
     const fm = this.app.metadataCache.getFileCache(file)?.frontmatter;
-    const gid = fm?.["asana-task-gid"];
+    const gid = fm?.["asana-task-gid"] as string | undefined;
     if (!gid) {
       new Notice("No Asana task linked to this note.");
       return;
@@ -196,12 +194,12 @@ export default class AsanaPlugin extends Plugin {
     try {
       const api = new AsanaAPI(this.settings.pat);
       const task = complete ? await api.completeTask(gid) : await api.uncompleteTask(gid);
-      await this.app.fileManager.processFrontMatter(file, (f) => {
+      await this.app.fileManager.processFrontMatter(file, (f: AsanaFrontmatter) => {
         f["asana-task-completed"] = task.completed;
       });
       new Notice(`Task marked ${task.completed ? "open" : "complete"}: ${task.name}`);
     } catch (e) {
-      new Notice("Failed: " + e.message);
+      new Notice("Failed: " + errorMessage(e));
     }
   }
 }

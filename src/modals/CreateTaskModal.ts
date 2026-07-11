@@ -1,5 +1,6 @@
 import { App, Modal, Notice, Setting } from "obsidian";
 import { AsanaAPI } from "../api";
+import { errorMessage } from "../errors";
 import { AsanaPluginSettings, AsanaWorkspace } from "../types";
 
 export class CreateTaskModal extends Modal {
@@ -27,7 +28,7 @@ export class CreateTaskModal extends Modal {
     contentEl.empty();
     contentEl.createEl("h2", { text: "Create Asana Task" });
 
-    this.loadWorkspacesAndProjects();
+    void this.loadWorkspacesAndProjects();
 
     new Setting(contentEl)
       .setName("Task name")
@@ -103,7 +104,7 @@ export class CreateTaskModal extends Modal {
             }
             this.close();
           } catch (e) {
-            new Notice("Failed to create task: " + e.message);
+            new Notice("Failed to create task: " + errorMessage(e));
             btn.setButtonText("Create Task").setDisabled(false);
           }
         })

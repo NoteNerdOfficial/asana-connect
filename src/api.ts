@@ -1,3 +1,4 @@
+import { requestUrl } from "obsidian";
 import {
   AsanaTask,
   AsanaUser,
@@ -10,30 +11,40 @@ const BASE = "https://app.asana.com/api/1.0";
 const TASK_FIELDS =
   "gid,name,notes,completed,due_on,assignee.name,assignee.gid,projects.gid,projects.name,tags.gid,tags.name,permalink_url,created_at,modified_at,custom_fields.gid,custom_fields.name,custom_fields.display_value";
 
+interface AsanaRequestOptions {
+  method?: string;
+  body?: string;
+  headers?: Record<string, string>;
+}
+
+interface AsanaEnvelope<T> {
+  data: T;
+}
+
 export class AsanaAPI {
   constructor(private pat: string) {}
 
-  async request<T = any>(path: string, options: RequestInit = {}): Promise<T> {
-    const res = await fetch(`${BASE}${path}`, {
-      ...options,
+  async request<T = unknown>(path: string, options: AsanaRequestOptions = {}): Promise<T> {
+    const res = await requestUrl({
+      url: `${BASE}${path}`,
+      method: options.method ?? "GET",
       headers: {
         Authorization: `Bearer ${this.pat}`,
         "Content-Type": "application/json",
         ...(options.headers ?? {}),
       },
+      body: options.body,
+      throw: false,
     });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`Asana API error ${res.status}: ${body}`);
+    if (res.status >= 400) {
+      throw new Error(`Asana API error ${res.status}: ${res.text}`);
     }
-    const json = await res.json();
+    const json = res.json as AsanaEnvelope<T>;
     return json.data;
   }
 
   async getMe(): Promise<AsanaUser> {
-    return this.request(
-      "/users/me?opt_fields=gid,name,email,workspaces.gid,workspaces.name"
-    );
+    return this.request("/users/me?opt_fields=gid,name,email,workspaces.gid,workspaces.name");
   }
 
   async getTask(gid: string): Promise<AsanaTask> {
